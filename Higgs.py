@@ -4,9 +4,14 @@ from __future__ import print_function
 
 import argparse
 import sys
-
+import os 
+import pandas as pd
+import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 import numpy as np
+from sklearn.datasets import fetch_mldata
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
 
 import tensorflow as tf
 
@@ -104,6 +109,21 @@ def create_model(X, num_layers, num_nodes, num_inputs,num_classes):
 
     return last_layer  # , weights_out, biases_out
 
+def filterCol(dataFram):
+    data_cols = dataFram.columns.tolist()
+    
+    for cols in data_cols:
+        
+        # Drop ID
+        if cols == 'EventId':
+            dataFram.drop([cols], axis = 1)
+        
+        # Drop columns that have missing values 
+        test_missing = (dataFram[cols] == -999.000)
+        if test_missing.sum() > 0:
+            dataFram = dataFram.drop([cols], axis = 1)
+            
+    return dataFram
 
 def main(_):
     # Import data
@@ -113,6 +133,9 @@ def main(_):
 
     df_train = pd.read_csv("HIGGS_training.csv")
     df_test = pd.read_csv("HIGGS_test.csv")
+    
+    df_train = filterCol(df_train)
+    df_test = filterCol(df_test)
 
     # Finally, we convert the Pandas dataframe to a NumPy array, and split it into a training and validation set
     H_X_train = df_train.drop('Label', axis=1).as_matrix()
@@ -127,17 +150,17 @@ def main(_):
     H_y_val_bin = np.where(H_y_val=='b', 1, 0)
     H_y_train_bin = np.where(H_y_train=='b', 1, 0)
     H_y_test_bin = np.where(H_y_test=='b', 1, 0)
-      
+    
     # Input Higgs data
     train_x = H_X_train
     train_y = H_y_train_bin
     num_layers = 10
     num_nodes = 32
     num_classes = 2
-    num_input=32
+    num_input= 21
 
     # Create the model
-    x = tf.placeholder(tf.float32, [None, 32])
+    x = tf.placeholder(tf.float32, [None, 21])
     y = create_model(x, num_layers, num_nodes,num_input,num_classes)
 
     # Define loss and optimizer
@@ -170,7 +193,8 @@ def main(_):
         # Test trained model
         if i % 10 == 0:
             print(sess.run(accuracy, feed_dict={x: H_X_test, y_: H_y_test_bin}))
-
+    
+    sess.close()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
