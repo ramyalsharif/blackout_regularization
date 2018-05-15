@@ -67,14 +67,13 @@ def get_batches(data_x, data_y, num_steps):
     return x_batches, y_batches
 
 
-def create_model(X, num_layers, num_nodes):
+def create_model(X, num_layers, num_nodes, num_classes):
     '''Creates a network architecture given the number of layers, and the number of nodes within each layer'''
     '''Returns a reference to a tensor that is dependent on x; it's not doing anything, apart from defining how the network looks like. '''
 
     # Constant variables, some to be changed to dynamic usage based on input
-    num_inputs = 28 * 28
-    num_classes = 10
-
+    num_inputs = int(X.shape[1])
+   
     # Generating weights and biases
     weights = generate_weights(num_layers, num_inputs, num_nodes, num_classes)
     biases = generate_biases(num_layers, num_nodes, num_classes)
@@ -110,12 +109,17 @@ def main(_):
     mnist = input_data.read_data_sets(FLAGS.data_dir)
     train_x = mnist.train.images
     train_y = mnist.train.labels
+    test_x = mnist.test.images
+    test_y = mnist.test.labels
     num_layers = 10
     num_nodes = 784
+    num_inputs = int(train_x.shape[1])
+    num_steps = 100
+    num_classes = 10
 
     # Create the model
-    x = tf.placeholder(tf.float32, [None, 784])
-    y = create_model(x, num_layers, num_nodes)
+    x = tf.placeholder(tf.float32, [None, num_inputs])
+    y = create_model(x, num_layers, num_nodes, num_classes)
 
     # Define loss and optimizer
     y_ = tf.placeholder(tf.int64, [None])
@@ -137,7 +141,7 @@ def main(_):
     sess = tf.InteractiveSession()
     tf.global_variables_initializer().run()
 
-    num_steps = 100
+    
 
     all_batches_x, all_batches_y = get_batches(train_x, train_y, num_steps)
 
@@ -145,7 +149,7 @@ def main(_):
     for i in range(len(all_batches_x)):
         sess.run(train_step, feed_dict={x: all_batches_x[i], y_: all_batches_y[i]})
         # Test trained model
-        if i % 100 == 0:
+        if i % 10 == 0:
             print(sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
 
 
