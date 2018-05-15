@@ -35,14 +35,27 @@ H_X_train, H_X_val, H_y_train, H_y_val = train_test_split(H_X_train, H_y_train, 
 H_y_val_bin = np.where(H_y_val=='b', 1, 0)
 H_y_train_bin = np.where(H_y_train=='b', 1, 0)
 
+#%% HIGGS test set
+
+df_test = pd.read_csv("HIGGS_test.csv")
+df_test.head(5)
+
+# Finally, we convert the Pandas dataframe to a NumPy array, and split it into a training and validation set
+H_X_test = df_train.drop('Label', axis=1).as_matrix()
+H_y_test = df_train['Label'].as_matrix()
+
+H_y_test_bin = np.where(H_y_test=='b', 1, 0)
+
+#%% Not used
+
 # Convert to tensor
 H_X_train_tf = tf.convert_to_tensor(H_X_train, np.float32)
 H_X_val_tf = tf.convert_to_tensor(H_X_val, np.float32)
 H_y_train_tf = tf.convert_to_tensor(H_y_train_bin, np.float32)
 H_y_val_tf = tf.convert_to_tensor(H_y_val_bin, np.float32)
 
-#H_train_dataset = tf.data.Dataset.from_tensor_slices((H_X_train,H_y_train_bin))
-#H_val_dataset = tf.data.Dataset.from_tensor_slices((H_X_val,H_y_val_bin))
+H_train_dataset = tf.data.Dataset.from_tensor_slices((H_X_train,H_y_train_bin))
+H_val_dataset = tf.data.Dataset.from_tensor_slices((H_X_val,H_y_val_bin))
 
 sess = tf.InteractiveSession()  
 print(H_X_train_tf.eval())
