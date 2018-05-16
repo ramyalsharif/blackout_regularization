@@ -109,6 +109,7 @@ def create_model(X, num_layers, num_nodes, num_inputs,num_classes):
 
     return last_layer  # , weights_out, biases_out
 
+# Remove columns
 def filterCol(dataFram):
     data_cols = dataFram.columns.tolist()
     
@@ -125,6 +126,61 @@ def filterCol(dataFram):
             
     return dataFram
 
+#
+# Functions from https://github.com/cbracher69/Kaggle-Higgs-Boson-Challenge/blob/master/Higgs%20Linear-Gaussian%20Model%20Archive.ipynb
+#
+#
+    
+# Preparation - Turn momenta, weights into logarithms, normalize non-angular data
+def logarithmic_momentum(dataFram):
+    # Replace momentum data with its logarithm
+    # I will add a small offset to avoid trouble with (rare) zero entries
+
+    cols =  cols = list(dataFram.columns)
+  
+    for column in cols:
+        if ((column.count('_phi') + column.count('eta')) == 0):
+            # Select momentum features only:
+            
+            print(np.log(dataFram[column] + 1e-8))
+            dataFram[column+'_log'] = np.log(dataFram[column] + 1e-8)
+            dataFram = dataFram.drop(column, axis = 1)
+            
+    return dataFram
+
+def normalize_data(dataFram):
+    # Normalize all non-angular data
+   
+    cols =  cols = list(dataFram.columns)
+    
+    for column in cols:
+        if ((column.count('_log') + column.count('_eta')) > 0):
+
+            avg = dataFram[column].mean()
+            dev = dataFram[column].std()
+
+            dataFram[column] = ((dataFram[column] - avg) / dev)
+                       
+    return dataFram
+
+def logarithmic_weights(dataFram):
+    # For training set, split off scoring information, 
+    # and add the logarithm of the weight as separate column.
+    
+    dataFram_outcome = dataFram[['Weight', 'Label']].copy()
+    dataFram_outcome['log(Weight)'] = np.log(dataFram_outcome['Weight'])
+
+    # Remove target information from data set
+
+    dataFram = dataFram.drop(['Weight', 'Label'], axis = 1)
+    
+    return dataFram, dataFram_outcome
+
+#
+#
+# End external functions
+#
+
 def main(_):
     # Import data
     #mnist = input_data.read_data_sets(FLAGS.data_dir)
@@ -134,8 +190,18 @@ def main(_):
     df_train = pd.read_csv("HIGGS_training.csv")
     df_test = pd.read_csv("HIGGS_test.csv")
     
+    # Filter columns
     df_train = filterCol(df_train)
     df_test = filterCol(df_test)
+    
+    # Normalize data, train and validation have extra weight-function
+    # Test set does not contain weights
+    df_train = logarithmic_momentum(df_train)
+    df_train = normalize_data(df_train)
+    df_test = logarithmic_momentum(df_test)
+    df_test = normalize_data(df_test)
+    
+    df_train = logarithmic_weights(df_train)
 
     # Finally, we convert the Pandas dataframe to a NumPy array, and split it into a training and validation set
     H_X_train = df_train.drop('Label', axis=1).as_matrix()
