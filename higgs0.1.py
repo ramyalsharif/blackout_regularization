@@ -13,6 +13,7 @@ from sklearn.datasets import fetch_mldata
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
+import zipfile
 
 import tensorflow as tf
 
@@ -181,57 +182,84 @@ def logarithmic_weights(dataFram):
 #
 # End external functions
 #
+    
+#%% Switch
+    
+def pickData(setType):
+    if(setType == 'HIGGS'):
+        zip_ref = zipfile.ZipFile("Archief.zip", 'r')
+        zip_ref.extractall(os.getcwd())
+        zip_ref.close()
+        
+        df_train = pd.read_csv("HIGGS_training.csv")
+        #df_test = pd.read_csv("HIGGS_test.csv")
+        
+        # Filter columns
+        df_train = filterCol(df_train)
+        #df_test = filterCol(df_test)
+        # Normalize data, train and validation have extra weight-function
+        # Test set does not contain weights
+        #df_train = logarithmic_momentum(df_train)
+        df_train = normalize_data(df_train)
+        #df_test = logarithmic_momentum(df_test)
+        #df_test = normalize_data(df_test)
+            #H_X_train = logarithmic_weights(df_train)
+    
+        # Finally, we convert the Pandas dataframe to a NumPy array, and split it into a training and validation set
+        H_X_train = df_train.drop(['Label','Weight'], axis=1).as_matrix()
+        #drop weights aswell
+       # H_X_train = H_X_train.drop('Weight', axis=1).as_matrix()
+        H_y_train = df_train['Label'].as_matrix()
+       
+        #split data
+        H_X_train, H_X_val, H_y_train, H_y_val = train_test_split(H_X_train, H_y_train, test_size=0.2)
+        
+        # Convert test Dataframe into NumPy array
+        max_abs_scaler = preprocessing.MaxAbsScaler()
+        #H_X_test = max_abs_scaler.fit_transform(df_test)
+    
+        # Make labels binary 
+        H_y_val_bin = np.where(H_y_val=='b', 1, 0)
+        H_y_train_bin = np.where(H_y_train=='b', 1, 0)
+        
+        
+        #scale data between 0 and 1
+        max_abs_scaler = preprocessing.MaxAbsScaler()
+        H_X_train = max_abs_scaler.fit_transform(H_X_train)
+        max_abs_scaler = preprocessing.MaxAbsScaler()
+        H_X_val = max_abs_scaler.fit_transform(H_X_val)  
+        
+        return H_X_train, H_y_train_bin, H_X_val, H_y_val_bin 
+    
+    elif (setType == 'MNIST'):
+        mnist = input_data.read_data_sets(FLAGS.data_dir)
+        train_x = mnist.train.images
+        train_y = mnist.train.labels
+        test_x = mnist.test.images
+        test_y = mnist.test.labels
+        
+        return train_x, train_y, test_x, test_y
+    
+    else:
+        return -1
+    
+
+
+
 #%%
 def main(_):
     # Import data
     #mnist = input_data.read_data_sets(FLAGS.data_dir)
-    os.chdir('C:\\Users\\micha\\Documents\\deep learning\\project')
-    print(os.listdir())
-
-    df_train = pd.read_csv("HIGGS_training.csv")
-    df_test = pd.read_csv("HIGGS_test.csv")
+    d_set = 'MNIST'
+    tr_X, tr_y, test_X, test_y = pickData(d_set)
     
-    # Filter columns
-    df_train = filterCol(df_train)
-    df_test = filterCol(df_test)
-    # Normalize data, train and validation have extra weight-function
-    # Test set does not contain weights
-    #df_train = logarithmic_momentum(df_train)
-    df_train = normalize_data(df_train)
-    #df_test = logarithmic_momentum(df_test)
-    df_test = normalize_data(df_test)
-        #H_X_train = logarithmic_weights(df_train)
-
-    # Finally, we convert the Pandas dataframe to a NumPy array, and split it into a training and validation set
-    H_X_train = df_train.drop(['Label','Weight'], axis=1).as_matrix()
-    #drop weights aswell
-   # H_X_train = H_X_train.drop('Weight', axis=1).as_matrix()
-    H_y_train = df_train['Label'].as_matrix()
-   
-    #split data
-    H_X_train, H_X_val, H_y_train, H_y_val = train_test_split(H_X_train, H_y_train, test_size=0.2)
-    
-    # Convert test Dataframe into NumPy array
-    max_abs_scaler = preprocessing.MaxAbsScaler()
-    H_X_test = max_abs_scaler.fit_transform(df_test)
-
-    # Make labels binary 
-    H_y_val_bin = np.where(H_y_val=='b', 1, 0)
-    H_y_train_bin = np.where(H_y_train=='b', 1, 0)
-    
-    
-    #scale data between 0 and 1
-    max_abs_scaler = preprocessing.MaxAbsScaler()
-    H_X_train = max_abs_scaler.fit_transform(H_X_train)
-    max_abs_scaler = preprocessing.MaxAbsScaler()
-    H_X_val = max_abs_scaler.fit_transform(H_X_val)  
     # Input Higgs data
-    train_x = H_X_train
-    train_y = H_y_train_bin
+    train_x = tr_X
+    train_y = tr_y
     num_layers = 5
     num_nodes = 32
-    num_classes = 2
-    num_input= 20
+    num_classes = len(np.unique(tr_y))
+    num_input= tr_X.shape[1]
 
     # Create the model
     x = tf.placeholder(tf.float32, [None, num_input])
@@ -264,7 +292,7 @@ def main(_):
         sess.run(train_step, feed_dict={x: all_batches_x[i], y_: all_batches_y[i]})
         #Test trained model
         if i % 10 == 0:
-            print(sess.run(accuracy, feed_dict={x: H_X_val, y_: H_y_val_bin}))
+            print(sess.run(accuracy, feed_dict={x: test_X, y_: test_y}))
     
     sess.close()
 
