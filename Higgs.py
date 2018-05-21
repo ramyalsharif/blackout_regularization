@@ -142,7 +142,7 @@ def logarithmic_momentum(dataFram):
         if ((column.count('_phi') + column.count('eta')) == 0):
             # Select momentum features only:
             
-            print(np.log(dataFram[column] + 1e-8))
+#            print(np.log(dataFram[column] + 1e-8))
             dataFram[column+'_log'] = np.log(dataFram[column] + 1e-8)
             dataFram = dataFram.drop(column, axis = 1)
             
@@ -184,8 +184,6 @@ def logarithmic_weights(dataFram):
 def main(_):
     # Import data
     #mnist = input_data.read_data_sets(FLAGS.data_dir)
-    os.chdir('/Users/valeriepourquie/Documents/Master/DL/Project')
-    print(os.listdir())
 
     df_train = pd.read_csv("HIGGS_training.csv")
     df_test = pd.read_csv("HIGGS_test.csv")

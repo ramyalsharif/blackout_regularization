@@ -103,6 +103,15 @@ def create_model(X, num_layers, num_nodes, num_classes):
 
     return last_layer  # , weights_out, biases_out
 
+def sigmoidBlackout(X,a,shift):
+  #Computes sigmoid of `x` element-wise.
+  #Specifically, `y = 1 / (1 + exp(-a*x))`.
+  return 1 / (1 + tf.exp(-(X-shift)*a))
+
+def CountActive(X):
+    a = tf.Variable(400.0,tf.float32)
+    shift = tf.Variable(0.03,tf.float32)
+    return tf.reduce_sum(sigmoidBlackout(X,a,shift)+sigmoidBlackout(-X,a,shift))
 
 def main(_):
     # Import data
@@ -117,24 +126,26 @@ def main(_):
     num_steps = 100
     num_classes = 10
 
-    # Create the model
+    # Initialize training data placeholder, training label placeholder, and model
     x = tf.placeholder(tf.float32, [None, num_inputs])
+    y_ = tf.placeholder(tf.int64, [None])
     y = create_model(x, num_layers, num_nodes, num_classes)
 
-    # Define loss and optimizer
-    y_ = tf.placeholder(tf.int64, [None])
+    # Retrieve weights
+    weights = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES)
+    
 
-    # The raw formulation of cross-entropy,
-    #
-    #   tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(tf.nn.softmax(y)),
-    #                                 reduction_indices=[1]))
-    #
-    # can be numerically unstable.
-    #
-    # So here we use tf.losses.sparse_softmax_cross_entropy on the raw
-    # outputs of 'y', and then average across the batch.
-    cross_entropy = tf.losses.sparse_softmax_cross_entropy(labels=y_, logits=y)
-    train_step = tf.train.RMSPropOptimizer(0.001).minimize(cross_entropy)
+    # Define regularization
+    target = tf.Variable(4.0,tf.float32)
+    init_regularization = tf.norm(weights,1)/tf.size(weights,out_type= tf.float32)
+    regularization = tf.abs(target-CountActive(weights))/tf.size(weights,out_type= tf.float32) * init_regularization
+
+    # Define loss components
+    cross_entropy = tf.losses.sparse_softmax_cross_entropy(labels=y_, logits=y) 
+    loss = cross_entropy + regularization
+    train_step = tf.train.RMSPropOptimizer(0.001).minimize(loss)
+
+    
     correct_prediction = tf.equal(tf.argmax(y, 1), y_)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
@@ -147,6 +158,7 @@ def main(_):
 
     # Train
     for i in range(len(all_batches_x)):
+
         sess.run(train_step, feed_dict={x: all_batches_x[i], y_: all_batches_y[i]})
         # Test trained model
         if i % 10 == 0:

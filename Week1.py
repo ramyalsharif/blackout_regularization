@@ -18,7 +18,7 @@ from sklearn import datasets
 from sklearn.model_selection import train_test_split
 
 print(os.getcwd())
-os.chdir('/Users/valeriepourquie/Documents/Master/DL/Project')
+#os.chdir('/Users/valeriepourquie/Documents/Master/DL/Project')
 print(os.listdir())
 
 #%% HIGGS training and validation set preprocessing 
