@@ -12,8 +12,13 @@ These instructions will get you a copy of the project up and running on your loc
 What things you need to install the software and how to install them
 
 ```
-Give examples
+Python 3.6
+Tensorflow
 ```
+
+### Datasets
+
+For testing, we here use two datasets, namely MNIST and HIGGS dataset. MNIST is downloaded during runtime, HIGGS however, needs to be extracted from the atlas-higgs-challenge-2014-v2.csv.gz in the repository root and renamed to "higgs_dataset.csv"
 
 ### Installing
 
