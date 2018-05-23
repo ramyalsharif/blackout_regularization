@@ -18,7 +18,7 @@ Tensorflow
 
 ### Datasets
 
-For testing, we here use two datasets, namely MNIST and HIGGS dataset. MNIST is downloaded during runtime, HIGGS however, needs to be extracted from the atlas-higgs-challenge-2014-v2.csv.gz in the repository root and renamed to "higgs_dataset.csv"
+For testing, we here use two datasets, namely MNIST and HIGGS dataset. MNIST is downloaded during runtime, HIGGS however, needs to be extracted from the atlas-higgs-challenge-2014-v2.csv.gz to the repository root.
 
 ### Installing
 
