@@ -177,7 +177,7 @@ def main(_):
             test_x = mnist.test.images
             test_y = mnist.test.labels
         else:
-            df_train = pd.read_csv("higgs_dataset.csv")
+            df_train = pd.read_csv("atlas-higgs-challenge-2014-v2.csv")
 
             # Filter columns
             df_train = filterCol(df_train)
