@@ -266,7 +266,7 @@ def main(_):
 
             # Train
             for i in range(num_steps):
-                randomPick=random.randint(range(numOfBatches))
+                randomPick=random.randint(0,numOfBatches)
                 currentBatchX=all_batches_x[randomPick]
                 currentBatchY=all_batches_y[randomPick]                
                 sess.run(train_step, feed_dict={x: currentBatchX, y_: currentBatchY})
