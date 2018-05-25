@@ -18,9 +18,9 @@ from sklearn import preprocessing
 
 FLAGS = None
 # 'HIGGS' or 'MNIST'
-dataset='HIGGS'
+dataset='MNIST'
 #    available regu types 'None','L1','L2','Blackout'
-reguType='BlackOut'
+reguType='None'
 numOfTests=100
 
 
@@ -172,6 +172,8 @@ def main(_):
             mnist = input_data.read_data_sets(FLAGS.data_dir)
             train_x = mnist.train.images
             train_y = mnist.train.labels
+            train_x, waste_x, train_y, waste_y = train_test_split(train_x, train_y, test_size=0.4, shuffle=True)
+
             valid_x = mnist.validation.images
             valid_y = mnist.validation.labels
             test_x = mnist.test.images
@@ -196,7 +198,7 @@ def main(_):
             # Make labels binary
             H_y_train=np.where(H_y_train=='b', 1, 0)
             train_x, test_x, train_y, test_y = train_test_split(H_X_train, H_y_train, test_size=0.5,shuffle=True)
-            train_x, valid_x, train_y, valid_y = train_test_split(train_x, train_y, test_size=0.5,shuffle=True)
+            train_x, valid_x, train_y, valid_y = train_test_split(train_x, train_y, test_size=0.2,shuffle=True)
         tf.reset_default_graph()
         for i in range(numOfTests):
             num_layers = random.choice([5,6,7,8,9,10])
@@ -259,14 +261,15 @@ def main(_):
             LossFunctionCrossTrain=[]
             LossFunctionCrossValid=[]
 
-            all_batches_x, all_batches_y = get_batches(train_x, train_y, num_steps)
+            numOfBatches=50
+            all_batches_x, all_batches_y = get_batches(train_x, train_y, numOfBatches)
 
-            NumberOfIter=len(all_batches_x)
-            if dataset=='MNIST':
-                NumberOfIter-=40
             # Train
-            for i in range(NumberOfIter):
-                sess.run(train_step, feed_dict={x: all_batches_x[i], y_: all_batches_y[i]})
+            for i in range(num_steps):
+                randomPick=random.randint(range(numOfBatches))
+                currentBatchX=all_batches_x[randomPick]
+                currentBatchY=all_batches_y[randomPick]                
+                sess.run(train_step, feed_dict={x: currentBatchX, y_: currentBatchY})
                 # Test trained model
                 if i % 20 == 1:
     #                print('Penalty from active weights: '+str(sess.run(penaltyNumOfActive)))
