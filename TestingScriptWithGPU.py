@@ -8,10 +8,8 @@ import random
 from tensorflow.examples.tutorials.mnist import input_data
 import numpy as np
 from sigmoidBlackout import getActivePenalty
-from sigmoidBlackout import CountActive
 import tensorflow as tf
 from matplotlib import pyplot as plt
-from sklearn import datasets
 from sklearn.model_selection import train_test_split
 import pandas as pd
 from sklearn import preprocessing
@@ -20,7 +18,7 @@ FLAGS = None
 # 'HIGGS' or 'MNIST'
 dataset='MNIST'
 #    available regu types 'None','L1','L2','Blackout'
-reguType='None'
+regularization_type='None'
 numOfTests=100
 
 
@@ -165,71 +163,71 @@ def storeResults(dataset,reguType, num_layers, num_nodes, num_steps,reguScale,pe
     with open('AccuracyResults'+dataset+reguType+'.txt', "a") as myfile:
         myfile.write(reguType+','+str(num_layers)+','+str(num_nodes)+','+str(num_steps)+','+str(reguScale)+','+str(percentOfConnectionsKept)+','+str(accuracyValidation)+','+str(accuracyTest)+'\n')
 
-def get_regularization_penalty(reg_type,weights):
+def get_regularization_penalty(weights, scale, percent_connections_kept):
     
-    if reguType=='L1':
-        regularizer = tf.contrib.layers.l1_regularizer(scale=reguScale, scope=None)
+    if regularization_type=='L1':
+        regularizer = tf.contrib.layers.l1_regularizer(scale=scale, scope=None)
         regularization_penalty = tf.contrib.layers.apply_regularization(regularizer, weights)
         
-    elif reguType=='L2':
-        regularizer = tf.contrib.layers.l2_regularizer(scale=reguScale, scope=None)
+    elif regularization_type=='L2':
+        regularizer = tf.contrib.layers.l2_regularizer(scale=scale, scope=None)
         regularization_penalty = tf.contrib.layers.apply_regularization(regularizer, weights)
     
-    elif reguType=='Blackout':
-        regularizer = tf.contrib.layers.l1_regularizer(scale=reguScale, scope=None)
+    elif regularization_type=='Blackout':
+        regularizer = tf.contrib.layers.l1_regularizer(scale=scale, scope=None)
         regularizationL1 = tf.contrib.layers.apply_regularization(regularizer, weights)
         
-        allWeights=None
+        blackout_weights=None
         for w in weights:
             if not(w.shape.__ne__([])==False):
-                if allWeights==None:
-                    allWeights=tf.reshape(w, [-1])
+                if blackout_weights==None:
+                    blackout_weights=tf.reshape(w, [-1])
                 else:
-                    allWeights=tf.concat([allWeights,tf.reshape(w, [-1])],axis=0)
-        targetNumberOfWeights=allWeights.shape[0].value*percentOfConnectionsKept
-        penaltyNumOfActive=getActivePenalty(allWeights,targetNumberOfWeights)
+                    blackout_weights=tf.concat([blackout_weights,tf.reshape(w, [-1])],axis=0)
+        targetNumberOfWeights=blackout_weights.shape[0].value*scale
+        penaltyNumOfActive=getActivePenalty(blackout_weights,targetNumberOfWeights)
         regularization_penalty=tf.cond(penaltyNumOfActive>0, lambda: penaltyNumOfActive*regularizationL1*100, lambda: tf.abs(penaltyNumOfActive)*targetNumberOfWeights*100)
     else:
         regularization_penalty=tf.constant(0.0)
     
-    return regularization_penalty
+    return regularization_penalty, blackout_weights
     
 
 def split_data(data):
     
     if dataset=='MNIST':
-            mnist = input_data.read_data_sets(FLAGS.data_dir)
-            train_x = mnist.train.images
-            train_y = mnist.train.labels
-            train_x, waste_x, train_y, waste_y = train_test_split(train_x, train_y, test_size=0.4, shuffle=True)
+        mnist = input_data.read_data_sets(FLAGS.data_dir)
+        train_x = mnist.train.images
+        train_y = mnist.train.labels
+        train_x, waste_x, train_y, waste_y = train_test_split(train_x, train_y, test_size=0.4, shuffle=True)
 
-            valid_x = mnist.validation.images
-            valid_y = mnist.validation.labels
-            test_x = mnist.test.images
-            test_y = mnist.test.labels
-        else:
-            df_train = pd.read_csv("atlas-higgs-challenge-2014-v2.csv")
+        valid_x = mnist.validation.images
+        valid_y = mnist.validation.labels
+        test_x = mnist.test.images
+        test_y = mnist.test.labels
+    else:
+        df_train = pd.read_csv("atlas-higgs-challenge-2014-v2.csv")
 
-            # Filter columns
-            df_train = filterCol(df_train)
+        # Filter columns
+        df_train = filterCol(df_train)
 
-            # Normalize data, train and validation have extra weight-function
-            # Test set does not contain weights
-            df_train = logarithmic_momentum(df_train)
-            df_train = logarithmic_weights(df_train)
+        # Normalize data, train and validation have extra weight-function
+        # Test set does not contain weights
+        df_train = logarithmic_momentum(df_train)
+        df_train = logarithmic_weights(df_train)
 
-            # Finally, we convert the Pandas dataframe to a NumPy array, and split it into a training and validation set
-            H_X_train = df_train.drop('Label', axis=1).as_matrix()
-            H_y_train = df_train['Label'].as_matrix()
-            max_abs_scaler = preprocessing.MaxAbsScaler()
-            H_X_train = max_abs_scaler.fit_transform(H_X_train)
+        # Finally, we convert the Pandas dataframe to a NumPy array, and split it into a training and validation set
+        H_X_train = df_train.drop('Label', axis=1).as_matrix()
+        H_y_train = df_train['Label'].as_matrix()
+        max_abs_scaler = preprocessing.MaxAbsScaler()
+        H_X_train = max_abs_scaler.fit_transform(H_X_train)
 
-            # Make labels binary
-            H_y_train=np.where(H_y_train=='b', 1, 0)
-            train_x, test_x, train_y, test_y = train_test_split(H_X_train, H_y_train, test_size=0.5,shuffle=True)
-            train_x, valid_x, train_y, valid_y = train_test_split(train_x, train_y, test_size=0.2,shuffle=True)
+        # Make labels binary
+        H_y_train=np.where(H_y_train=='b', 1, 0)
+        train_x, test_x, train_y, test_y = train_test_split(H_X_train, H_y_train, test_size=0.5,shuffle=True)
+        train_x, valid_x, train_y, valid_y = train_test_split(train_x, train_y, test_size=0.2,shuffle=True)
             
-            return train_x, train_y, valid_x, valid_y, test_x, test_y
+    return train_x, train_y, valid_x, valid_y, test_x, test_y
 
 def main(_):
     with tf.device('/gpu:0'):
@@ -245,11 +243,11 @@ def main(_):
             num_nodes = random.choice([200,400,600])
             num_inputs = int(train_x.shape[1])
             num_steps = random.choice([50,100,150,200])
-            reguScale=random.choice([0.01,0.005,0.001,0.0005])
-            percentOfConnectionsKept=random.choice([0.9,0.95,0.85])
+            regularization_scale = random.choice([0.01,0.005,0.001,0.0005])
+            percent_connections_kept=random.choice([0.9,0.95,0.85])
             num_classes = 10
             print('Test No. '+str(i)+'/'+str(numOfTests))
-            print('Parameters: '+reguType+','+str(num_layers)+','+str(num_nodes)+','+str(num_steps)+','+str(reguScale)+','+str(percentOfConnectionsKept))
+            print('Parameters: '+regularization_type+','+str(num_layers)+','+str(num_nodes)+','+str(num_steps)+','+str(regularization_scale)+','+str(percent_connections_kept))
             
             # Create the model
             x = tf.placeholder(tf.float32, [None, num_inputs])
@@ -260,7 +258,7 @@ def main(_):
             
             # Retrieving weights and defining regularization penalty  
             weights=tf.trainable_variables()
-            regularization_penalty = get_regularization_penalty(regularization_type)    
+            regularization_penalty, blackout_weights = get_regularization_penalty(weights, regularization_scale, percent_connections_kept)    
             
             #Defining loss and optimizer
             cross=tf.losses.sparse_softmax_cross_entropy(labels=y_, logits=y)
@@ -291,23 +289,18 @@ def main(_):
                 sess.run(train_step, feed_dict={x: currentBatchX, y_: currentBatchY})
                 # Test trained model
                 if i % 20 == 1:
-    #                print('Penalty from active weights: '+str(sess.run(penaltyNumOfActive)))
                     print('Accuracy: '+str(sess.run(accuracy, feed_dict={x: valid_x, y_: valid_y})))
-                    if reguType=='Blackout':
-                        currentWeights=sess.run(allWeights)
+                    if regularization_type=='Blackout':
+                        currentWeights=sess.run(blackout_weights)
                         part1=currentWeights>-0.01
                         part2=currentWeights<0.01
                         turnedOff=np.sum(np.logical_and(part1,part2))
                         TotalNumOfWeights=float(currentWeights.shape[0])
-        #                print('Turned Off Connections: '+str(turnedOff))
-        #                print('Percentage Of connections remaining: '+str((TotalNumOfWeights-turnedOff)/TotalNumOfWeights)+' , TARGET: ' +str(percentOfConnectionsKept))
                         LossFunctionCrossTrain.append(sess.run(cross, feed_dict={x: train_x, y_: train_y}))
                         LossFunctionCrossValid.append(sess.run(cross, feed_dict={x: valid_x, y_: valid_y}))
                         LossFunctionRegu.append(sess.run(regularization_penalty))
-    #                print(LossFunctionRegu[-1])
-    #                print(LossFunctionCrossValid[-1])
                         PercentageOfConnOff.append((TotalNumOfWeights-turnedOff)/TotalNumOfWeights)
-            if reguType=='Blackout':
+            if regularization_type=='Blackout':
                 fig = plt.figure()
                 ax1 = fig.add_subplot(1, 2, 1)
                 ax2 = fig.add_subplot(1, 2, 2)
@@ -320,7 +313,7 @@ def main(_):
             accuracyVal=sess.run(accuracy, feed_dict={x: valid_x, y_: valid_y})
             accuracyTest=sess.run(accuracy, feed_dict={x: test_x, y_: test_y})
             tf.reset_default_graph()
-            storeResults(dataset,reguType, num_layers, num_nodes, num_steps,reguScale,percentOfConnectionsKept,accuracyVal, accuracyTest)
+            storeResults(dataset,regularization_type, num_layers, num_nodes, num_steps,regularization_scale,percent_connections_kept,accuracyVal, accuracyTest)
             print('Accuracy Val: '+str(accuracyVal)+' , Accuracy Test: '+str(accuracyTest))
         
 if __name__ == '__main__':
