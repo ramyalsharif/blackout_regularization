@@ -168,32 +168,29 @@ def storeResults(dataset,reguType, num_layers, num_nodes, num_steps,reguScale,pe
 def get_regularization_penalty(reg_type,weights):
     
     if reguType=='L1':
-                regularizer = tf.contrib.layers.l1_regularizer(
-                    scale=reguScale, scope=None
-                )
-                regularization_penalty = tf.contrib.layers.apply_regularization(regularizer, weights)
-            elif reguType=='L2':
-                regularizer = tf.contrib.layers.l2_regularizer(
-                    scale=reguScale, scope=None
-                )
-                regularization_penalty = tf.contrib.layers.apply_regularization(regularizer, weights)
-            elif reguType=='Blackout':
-                regularizer = tf.contrib.layers.l1_regularizer(
-                    scale=reguScale, scope=None
-                )
-                regularizationL1 = tf.contrib.layers.apply_regularization(regularizer, weights)
-                allWeights=None
-                for w in weights:
-                    if not(w.shape.__ne__([])==False):
-                        if allWeights==None:
-                            allWeights=tf.reshape(w, [-1])
-                        else:
-                            allWeights=tf.concat([allWeights,tf.reshape(w, [-1])],axis=0)
-                targetNumberOfWeights=allWeights.shape[0].value*percentOfConnectionsKept
-                penaltyNumOfActive=getActivePenalty(allWeights,targetNumberOfWeights)
-                regularization_penalty=tf.cond(penaltyNumOfActive>0, lambda: penaltyNumOfActive*regularizationL1*100, lambda: tf.abs(penaltyNumOfActive)*targetNumberOfWeights*100)
-            else:
-                regularization_penalty=tf.constant(0.0)
+        regularizer = tf.contrib.layers.l1_regularizer(scale=reguScale, scope=None)
+        regularization_penalty = tf.contrib.layers.apply_regularization(regularizer, weights)
+        
+    elif reguType=='L2':
+        regularizer = tf.contrib.layers.l2_regularizer(scale=reguScale, scope=None)
+        regularization_penalty = tf.contrib.layers.apply_regularization(regularizer, weights)
+    
+    elif reguType=='Blackout':
+        regularizer = tf.contrib.layers.l1_regularizer(scale=reguScale, scope=None)
+        regularizationL1 = tf.contrib.layers.apply_regularization(regularizer, weights)
+        
+        allWeights=None
+        for w in weights:
+            if not(w.shape.__ne__([])==False):
+                if allWeights==None:
+                    allWeights=tf.reshape(w, [-1])
+                else:
+                    allWeights=tf.concat([allWeights,tf.reshape(w, [-1])],axis=0)
+        targetNumberOfWeights=allWeights.shape[0].value*percentOfConnectionsKept
+        penaltyNumOfActive=getActivePenalty(allWeights,targetNumberOfWeights)
+        regularization_penalty=tf.cond(penaltyNumOfActive>0, lambda: penaltyNumOfActive*regularizationL1*100, lambda: tf.abs(penaltyNumOfActive)*targetNumberOfWeights*100)
+    else:
+        regularization_penalty=tf.constant(0.0)
     
     return regularization_penalty
     
