@@ -165,10 +165,42 @@ def storeResults(dataset,reguType, num_layers, num_nodes, num_steps,reguScale,pe
     with open('AccuracyResults'+dataset+reguType+'.txt', "a") as myfile:
         myfile.write(reguType+','+str(num_layers)+','+str(num_nodes)+','+str(num_steps)+','+str(reguScale)+','+str(percentOfConnectionsKept)+','+str(accuracyValidation)+','+str(accuracyTest)+'\n')
 
-def main(_):
-    with tf.device('/gpu:0'):
+def get_regularization_penalty(reg_type,weights):
+    
+    if reguType=='L1':
+                regularizer = tf.contrib.layers.l1_regularizer(
+                    scale=reguScale, scope=None
+                )
+                regularization_penalty = tf.contrib.layers.apply_regularization(regularizer, weights)
+            elif reguType=='L2':
+                regularizer = tf.contrib.layers.l2_regularizer(
+                    scale=reguScale, scope=None
+                )
+                regularization_penalty = tf.contrib.layers.apply_regularization(regularizer, weights)
+            elif reguType=='Blackout':
+                regularizer = tf.contrib.layers.l1_regularizer(
+                    scale=reguScale, scope=None
+                )
+                regularizationL1 = tf.contrib.layers.apply_regularization(regularizer, weights)
+                allWeights=None
+                for w in weights:
+                    if not(w.shape.__ne__([])==False):
+                        if allWeights==None:
+                            allWeights=tf.reshape(w, [-1])
+                        else:
+                            allWeights=tf.concat([allWeights,tf.reshape(w, [-1])],axis=0)
+                targetNumberOfWeights=allWeights.shape[0].value*percentOfConnectionsKept
+                penaltyNumOfActive=getActivePenalty(allWeights,targetNumberOfWeights)
+                regularization_penalty=tf.cond(penaltyNumOfActive>0, lambda: penaltyNumOfActive*regularizationL1*100, lambda: tf.abs(penaltyNumOfActive)*targetNumberOfWeights*100)
+            else:
+                regularization_penalty=tf.constant(0.0)
+    
+    return regularization_penalty
+    
 
-        if dataset=='MNIST':
+def split_data(data):
+    
+    if dataset=='MNIST':
             mnist = input_data.read_data_sets(FLAGS.data_dir)
             train_x = mnist.train.images
             train_y = mnist.train.labels
@@ -199,7 +231,18 @@ def main(_):
             H_y_train=np.where(H_y_train=='b', 1, 0)
             train_x, test_x, train_y, test_y = train_test_split(H_X_train, H_y_train, test_size=0.5,shuffle=True)
             train_x, valid_x, train_y, valid_y = train_test_split(train_x, train_y, test_size=0.2,shuffle=True)
+            
+            return train_x, train_y, valid_x, valid_y, test_x, test_y
+
+def main(_):
+    with tf.device('/gpu:0'):
+        
+        # Getting the appropriate dataset
+        train_x, train_y, valid_x, valid_y, test_x, test_y = split_data(dataset)
+
+        # Resetting the graph incase of multiple runs on the same console
         tf.reset_default_graph()
+
         for i in range(numOfTests):
             num_layers = random.choice([5,6,7,8,9,10])
             num_nodes = random.choice([200,400,600])
@@ -210,47 +253,26 @@ def main(_):
             num_classes = 10
             print('Test No. '+str(i)+'/'+str(numOfTests))
             print('Parameters: '+reguType+','+str(num_layers)+','+str(num_nodes)+','+str(num_steps)+','+str(reguScale)+','+str(percentOfConnectionsKept))
+            
             # Create the model
             x = tf.placeholder(tf.float32, [None, num_inputs])
             y= create_model(x, num_layers, num_nodes, num_classes)
 
             # Define loss and optimizer
             y_ = tf.placeholder(tf.int64, [None])
-
+            
+            # Retrieving weights and defining regularization penalty  
             weights=tf.trainable_variables()
-
-            if reguType=='L1':
-                regularizer = tf.contrib.layers.l1_regularizer(
-                    scale=reguScale, scope=None
-                )
-                regularization_penalty = tf.contrib.layers.apply_regularization(regularizer, weights)
-            elif reguType=='L2':
-                regularizer = tf.contrib.layers.l2_regularizer(
-                    scale=reguScale, scope=None
-                )
-                regularization_penalty = tf.contrib.layers.apply_regularization(regularizer, weights)
-            elif reguType=='Blackout':
-                regularizer = tf.contrib.layers.l1_regularizer(
-                    scale=reguScale, scope=None
-                )
-                regularizationL1 = tf.contrib.layers.apply_regularization(regularizer, weights)
-                allWeights=None
-                for w in weights:
-                    if not(w.shape.__ne__([])==False):
-                        if allWeights==None:
-                            allWeights=tf.reshape(w, [-1])
-                        else:
-                            allWeights=tf.concat([allWeights,tf.reshape(w, [-1])],axis=0)
-                targetNumberOfWeights=allWeights.shape[0].value*percentOfConnectionsKept
-                penaltyNumOfActive=getActivePenalty(allWeights,targetNumberOfWeights)
-                regularization_penalty=tf.cond(penaltyNumOfActive>0, lambda: penaltyNumOfActive*regularizationL1*100, lambda: tf.abs(penaltyNumOfActive)*targetNumberOfWeights*100)
-            else:
-                regularization_penalty=tf.constant(0.0)
+            regularization_penalty = get_regularization_penalty(regularization_type)    
+            
+            #Defining loss and optimizer
             cross=tf.losses.sparse_softmax_cross_entropy(labels=y_, logits=y)
             loss = cross+regularization_penalty
             train_step = tf.train.RMSPropOptimizer(0.001).minimize(loss)
             correct_prediction = tf.equal(tf.argmax(y, 1), y_)
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+            
+            # Initializing session
             sess = tf.InteractiveSession()
             tf.global_variables_initializer().run()
 
