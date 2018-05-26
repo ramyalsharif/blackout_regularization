@@ -16,6 +16,7 @@ import tensorflow as tf
 from sigmoidBlackout import getActivePenalty
 from sklearn.model_selection import train_test_split
 import random
+import numpy as np
 # Import MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
@@ -137,6 +138,13 @@ def split_data(data):
     
     return train_x, train_y, valid_x, valid_y, test_x, test_y
 
+def get_batches(data_x, data_y, num_steps):
+    n_batches = np.ceil(len(data_x) / num_steps)
+    x_batches = np.array_split(data_x, n_batches)
+    y_batches = np.array_split(data_y, n_batches)
+    print(y_batches[0].shape)
+    return x_batches, y_batches
+
 # Store layers weight & bias
 weights = {
     # 5x5 conv, 1 input, 32 outputs
@@ -155,69 +163,73 @@ biases = {
     'bd1': tf.Variable(tf.random_normal([1024])),
     'out': tf.Variable(tf.random_normal([num_classes]))
 }
-with tf.device('/gpu:0'):
-    
-    # Getting the appropriate dataset
-    train_x, train_y, valid_x, valid_y, test_x, test_y = split_data(dataset)
+#with tf.device('/gpu:0'):
 
-    # Resetting the graph incase of multiple runs on the same console
-    tf.reset_default_graph()
+# Getting the appropriate dataset
+#train_x, train_y, valid_x, valid_y, test_x, test_y = split_data(dataset)
+
+# Resetting the graph incase of multiple runs on the same console
+#tf.reset_default_graph()
+
+for i in range(number_of_tests):
     
-    for i in range(number_of_tests):
+    num_steps = random.choice([50,100,150,200])
+    regularization_scale = random.choice([0.01,0.005,0.001,0.0005])
+    percent_connections_kept=random.choice([0.9,0.95,0.85])
+    
+    print('Test No. '+str(i)+'/'+str(number_of_tests))
+    print('Parameters: '+regularization_type +',scale: ' + str(regularization_scale)+', percent kept:'+str(percent_connections_kept))
         
-        num_steps = random.choice([50,100,150,200])
-        regularization_scale = random.choice([0.01,0.005,0.001,0.0005])
-        percent_connections_kept=random.choice([0.9,0.95,0.85])
+    
+    # Construct model
+    logits = conv_net(X, weights, biases, keep_prob)
+    prediction = tf.nn.softmax(logits)
+    
+    # Retrieving weights and defining regularization penalty  
+    weights=tf.trainable_variables()
+    regularization_penalty, blackout_weights = get_regularization_penalty(weights, regularization_scale, percent_connections_kept)    
         
-        print('Test No. '+str(i)+'/'+str(number_of_tests))
-        print('Parameters: '+regularization_type +',scale: ' + str(regularization_scale)+', percent kept:'+str(percent_connections_kept))
-            
+    
+    # Define loss and optimizer
+    cross=tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+        logits=logits, labels=Y))
+    loss_op = cross+regularization_penalty
+    train_op = tf.train.RMSPropOptimizer(0.001).minimize(loss_op)
+    
+    # Evaluate model
+    correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+    
+    # Initialize the variables (i.e. assign their default value)
+    init = tf.global_variables_initializer()
+    
+    # Start training
+    with tf.Session() as sess:
+    
+        # Run the initializer
+        sess.run(init)
         
-        # Construct model
-        logits = conv_net(X, weights, biases, keep_prob)
-        prediction = tf.nn.softmax(logits)
-        
-        # Retrieving weights and defining regularization penalty  
-        weights=tf.trainable_variables()
-        regularization_penalty, blackout_weights = get_regularization_penalty(weights, regularization_scale, percent_connections_kept)    
-            
-        
-        # Define loss and optimizer
-        cross=tf.losses.sparse_softmax_cross_entropy(labels=Y, logits=logits)
-        loss_op = cross#+regularization_penalty
-        train_op = tf.train.RMSPropOptimizer(0.001).minimize(loss_op)
-        
-        
-        # Evaluate model
-        correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
-        accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
-        
-        # Initialize the variables (i.e. assign their default value)
-        init = tf.global_variables_initializer()
-        
-        # Start training
-        with tf.Session() as sess:
-        
-            # Run the initializer
-            sess.run(init)
-        
-            for step in range(1, num_steps+1):
-                batch_x, batch_y = mnist.train.next_batch(batch_size)
-                # Run optimization op (backprop)
-                sess.run(train_op, feed_dict={X: batch_x, Y: batch_y, keep_prob: 0.8})
-                if step % display_step == 0 or step == 1:
-                    # Calculate batch loss and accuracy
-                    loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
-                                                                         Y: batch_y,
-                                                                         keep_prob: 1.0})
-                    print("Step " + str(step) + ", Minibatch Loss= " + \
-                          "{:.4f}".format(loss) + ", Training Accuracy= " + \
-                          "{:.3f}".format(acc))
-        
-            print("Optimization Finished!")
-        
-            # Calculate accuracy for 256 MNIST test images
-            print("Testing Accuracy:", \
-                sess.run(accuracy, feed_dict={X: mnist.test.images[:256],
-                                              Y: mnist.test.labels[:256],
-                                              keep_prob: 1.0}))
+        numOfBatches=50
+        #all_batches_x, all_batches_y = get_batches(train_x, train_y, numOfBatches)
+
+    
+        for step in range(1, num_steps+1):
+            batch_x, batch_y = mnist.train.next_batch(batch_size)
+            # Run optimization op (backprop)
+            sess.run(train_op, feed_dict={X: batch_x, Y: batch_y, keep_prob: 0.8})
+            if step % display_step == 0 or step == 1:
+                # Calculate batch loss and accuracy
+                loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
+                                                                     Y: batch_y,
+                                                                     keep_prob: 1.0})
+                print("Step " + str(step) + ", Minibatch Loss= " + \
+                      "{:.4f}".format(loss) + ", Training Accuracy= " + \
+                      "{:.3f}".format(acc))
+    
+        print("Optimization Finished!")
+    
+        # Calculate accuracy for 256 MNIST test images
+        print("Testing Accuracy:", \
+            sess.run(accuracy, feed_dict={X: mnist.test.images[:256],
+                                          Y: mnist.test.labels[:256],
+                                          keep_prob: 1.0}))
