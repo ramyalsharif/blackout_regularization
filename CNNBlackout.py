@@ -19,7 +19,7 @@ import random
 # Import MNIST data
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
-FLAGS = None
+
 # Training Parameters
 learning_rate = 0.001
 num_steps = 200
@@ -125,7 +125,7 @@ def get_regularization_penalty(weights, scale, percent_connections_kept):
 def split_data(data):
     
     if dataset=='MNIST':
-        mnist = input_data.read_data_sets(FLAGS.data_dir)
+        mnist = input_data.read_data_sets("/tmp/data/", one_hot=True)
         train_x = mnist.train.images
         train_y = mnist.train.labels
         train_x, waste_x, train_y, waste_y = train_test_split(train_x, train_y, test_size=0.4, shuffle=True)
