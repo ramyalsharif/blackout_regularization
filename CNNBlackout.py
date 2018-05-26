@@ -184,7 +184,7 @@ with tf.device('/gpu:0'):
         
         # Define loss and optimizer
         cross=tf.losses.sparse_softmax_cross_entropy(labels=Y, logits=logits)
-        loss_op = cross+regularization_penalty
+        loss_op = cross#+regularization_penalty
         train_op = tf.train.RMSPropOptimizer(0.001).minimize(loss_op)
         
         
