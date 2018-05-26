@@ -165,6 +165,8 @@ def storeResults(dataset,reguType, num_layers, num_nodes, num_steps,reguScale,pe
 
 def get_regularization_penalty(weights, scale, percent_connections_kept):
     
+    blackout_weights=None
+    
     if regularization_type=='L1':
         regularizer = tf.contrib.layers.l1_regularizer(scale=scale, scope=None)
         regularization_penalty = tf.contrib.layers.apply_regularization(regularizer, weights)
@@ -177,7 +179,7 @@ def get_regularization_penalty(weights, scale, percent_connections_kept):
         regularizer = tf.contrib.layers.l1_regularizer(scale=scale, scope=None)
         regularizationL1 = tf.contrib.layers.apply_regularization(regularizer, weights)
         
-        blackout_weights=None
+        
         for w in weights:
             if not(w.shape.__ne__([])==False):
                 if blackout_weights==None:
@@ -260,10 +262,12 @@ def main(_):
             weights=tf.trainable_variables()
             regularization_penalty, blackout_weights = get_regularization_penalty(weights, regularization_scale, percent_connections_kept)    
             
-            #Defining loss and optimizer
+            # Defining loss and optimizer
             cross=tf.losses.sparse_softmax_cross_entropy(labels=y_, logits=y)
             loss = cross+regularization_penalty
             train_step = tf.train.RMSPropOptimizer(0.001).minimize(loss)
+            
+            # Evaluate Model
             correct_prediction = tf.equal(tf.argmax(y, 1), y_)
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
             
