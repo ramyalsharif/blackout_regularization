@@ -236,13 +236,9 @@ with tf.device('/gpu:0'):
             
                 print("Optimization Finished!")
             
-                # Calculate accuracy for 256 MNIST test images
-                print("Testing Accuracy:", \
-                test_acc = sess.run(accuracy, feed_dict={X: mnist.test.images[:256],
-                                                  Y: mnist.test.labels[:256],
-                                                  keep_prob: 1.0}))
                 accuracyTest=sess.run(accuracy, feed_dict={X: test_x, Y: test_y, keep_prob: 1.0})
                     
             
                 accuracyVal=sess.run(accuracy, feed_dict={X: valid_x, Y: valid_y, keep_prob: 1.0})
                 storeResults(dataset,regularization_type, regularization_scale,percent_connections_kept,accuracyVal, accuracyTest)
+                print('Accuracy Val: '+str(accuracyVal)+' , Accuracy Test: '+str(accuracyTest))
