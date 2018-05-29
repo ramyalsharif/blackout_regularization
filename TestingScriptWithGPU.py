@@ -14,7 +14,7 @@ from model_functions import create_model, get_regularization_penalty
 # 'HIGGS' or 'MNIST'
 dataset='MNIST'
 #    available regu types 'None','L1','L2','Blackout'
-regularization_type='None'
+regularization_type='L1'
 numOfTests=50
 #training_set_size = 5000
 
@@ -32,6 +32,8 @@ def main(_):
         dataset_sizes = np.linspace(2500,55000, num=22)
         for size in dataset_sizes:
             # Getting the appropriate dataset
+            
+            print(int(size))
             train_x, train_y, valid_x, valid_y, test_x, test_y = split_data(dataset, int(size))
     
             # Resetting the graph incase of multiple runs on the same console
@@ -87,6 +89,9 @@ def main(_):
                 # Train
                 for i in range(num_steps):
                     randomPick=random.randint(0,numOfBatches)
+                    #print(str(len(all_batches_x)) + " getting " + str(randomPick))
+                    if randomPick == 50:
+                        randomPick = 49
                     currentBatchX=all_batches_x[randomPick]
                     currentBatchY=all_batches_y[randomPick]                
                     sess.run(train_step, feed_dict={x: currentBatchX, y_: currentBatchY})
