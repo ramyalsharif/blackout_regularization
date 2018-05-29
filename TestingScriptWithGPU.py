@@ -94,16 +94,16 @@ def main(_):
                         # Test trained model
                         if i % 20 == 1:
                             print('Accuracy: '+str(sess.run(accuracy, feed_dict={x: valid_x, y_: valid_y})))
-                            if regularization_type=='Blackout':
-                                currentWeights=sess.run(blackout_weights)
-                                part1=currentWeights>-0.01
-                                part2=currentWeights<0.01
-                                turnedOff=np.sum(np.logical_and(part1,part2))
-                                TotalNumOfWeights=float(currentWeights.shape[0])
-                                LossFunctionCrossTrain.append(sess.run(cross, feed_dict={x: train_x, y_: train_y}))
-                                LossFunctionCrossValid.append(sess.run(cross, feed_dict={x: valid_x, y_: valid_y}))
-                                LossFunctionRegu.append(sess.run(regularization_penalty))
-                                PercentageOfConnOff.append((TotalNumOfWeights-turnedOff)/TotalNumOfWeights)
+#                            if regularization_type=='Blackout':
+#                                currentWeights=sess.run(blackout_weights)
+#                                part1=currentWeights>-0.01
+#                                part2=currentWeights<0.01
+#                                turnedOff=np.sum(np.logical_and(part1,part2))
+#                                TotalNumOfWeights=float(currentWeights.shape[0])
+#                                LossFunctionCrossTrain.append(sess.run(cross, feed_dict={x: train_x, y_: train_y}))
+#                                LossFunctionCrossValid.append(sess.run(cross, feed_dict={x: valid_x, y_: valid_y}))
+#                                LossFunctionRegu.append(sess.run(regularization_penalty))
+#                                PercentageOfConnOff.append((TotalNumOfWeights-turnedOff)/TotalNumOfWeights)
                     #if regularization_type=='Blackout':
                     #    fig = plt.figure()
                     #    ax1 = fig.add_subplot(1, 2, 1)
