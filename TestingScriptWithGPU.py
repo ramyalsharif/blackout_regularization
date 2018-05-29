@@ -8,14 +8,13 @@ import random
 import numpy as np
 
 import tensorflow as tf
-from matplotlib import pyplot as plt
 from data_processing import split_data, get_batches, store_results
 from model_functions import create_model, get_regularization_penalty
 
 # 'HIGGS' or 'MNIST'
 dataset='MNIST'
 #    available regu types 'None','L1','L2','Blackout'
-regularization_type='Blackout'
+regularization_type='None'
 numOfTests=50
 training_set_size = 5000
 
@@ -30,10 +29,10 @@ training_set_size = 5000
 def main(_):
     with tf.device('/gpu:0'):
     
-        dataset_sizes = np.linspace(5000,55000, num=21)
+        dataset_sizes = np.linspace(2500,55000, num=22)
         for size in dataset_sizes:
             # Getting the appropriate dataset
-            train_x, train_y, valid_x, valid_y, test_x, test_y = split_data(dataset, training_set_size)
+            train_x, train_y, valid_x, valid_y, test_x, test_y = split_data(dataset, size)
     
             # Resetting the graph incase of multiple runs on the same console
             tf.reset_default_graph()
