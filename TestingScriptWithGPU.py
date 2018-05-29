@@ -30,7 +30,7 @@ training_set_size = 5000
 def main(_):
     with tf.device('/gpu:0'):
     
-        dataset_sizes = np.linspace(5000,55000, num=20)
+        dataset_sizes = np.linspace(5000,55000, num=21)
         for size in dataset_sizes:
             # Getting the appropriate dataset
             train_x, train_y, valid_x, valid_y, test_x, test_y = split_data(dataset, training_set_size)
