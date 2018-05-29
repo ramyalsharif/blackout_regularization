@@ -36,7 +36,7 @@ def main(_):
             train_x, train_y, valid_x, valid_y, test_x, test_y = split_data(dataset, training_set_size)
     
             # Resetting the graph incase of multiple runs on the same console
-            tf.reset_default_graph()
+            #tf.reset_default_graph()
             for i in range(numOfTests):
                 num_layers = random.choice([5,6,7,8,9,10])
                 num_nodes = random.choice([200,400,600])
