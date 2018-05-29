@@ -36,7 +36,7 @@ def main(_):
             train_x, train_y, valid_x, valid_y, test_x, test_y = split_data(dataset, training_set_size)
     
             # Resetting the graph incase of multiple runs on the same console
-            #tf.reset_default_graph()
+            tf.reset_default_graph()
             for i in range(numOfTests):
                 num_layers = random.choice([5,6,7,8,9,10])
                 num_nodes = random.choice([200,400,600])
@@ -72,28 +72,28 @@ def main(_):
                 config.gpu_options.allow_growth = True
 
                 # Initializing session
-                with tf.Session(config=config) as sess:
-                    tf.global_variables_initializer().run()
-            
-            
-                    # Train
-                    PercentageOfConnOff=[]
-                    LossFunctionRegu=[]
-                    LossFunctionCrossTrain=[]
-                    LossFunctionCrossValid=[]
-            
-                    numOfBatches=50
-                    all_batches_x, all_batches_y = get_batches(train_x, train_y, numOfBatches)
-            
-                    # Train
-                    for i in range(num_steps):
-                        randomPick=random.randint(0,numOfBatches)
-                        currentBatchX=all_batches_x[randomPick]
-                        currentBatchY=all_batches_y[randomPick]                
-                        sess.run(train_step, feed_dict={x: currentBatchX, y_: currentBatchY})
-                        # Test trained model
-                        if i % 20 == 1:
-                            print('Accuracy: '+str(sess.run(accuracy, feed_dict={x: valid_x, y_: valid_y})))
+                sess = tf.InteractiveSession(config=config);
+                tf.global_variables_initializer().run()
+        
+        
+                # Train
+#                PercentageOfConnOff=[]
+#                LossFunctionRegu=[]
+#                LossFunctionCrossTrain=[]
+#                LossFunctionCrossValid=[]
+#        
+                numOfBatches=50
+                all_batches_x, all_batches_y = get_batches(train_x, train_y, numOfBatches)
+        
+                # Train
+                for i in range(num_steps):
+                    randomPick=random.randint(0,numOfBatches)
+                    currentBatchX=all_batches_x[randomPick]
+                    currentBatchY=all_batches_y[randomPick]                
+                    sess.run(train_step, feed_dict={x: currentBatchX, y_: currentBatchY})
+                    # Test trained model
+                    if i % 20 == 1:
+                        print('Accuracy: '+str(sess.run(accuracy, feed_dict={x: valid_x, y_: valid_y})))
 #                            if regularization_type=='Blackout':
 #                                currentWeights=sess.run(blackout_weights)
 #                                part1=currentWeights>-0.01
@@ -104,21 +104,21 @@ def main(_):
 #                                LossFunctionCrossValid.append(sess.run(cross, feed_dict={x: valid_x, y_: valid_y}))
 #                                LossFunctionRegu.append(sess.run(regularization_penalty))
 #                                PercentageOfConnOff.append((TotalNumOfWeights-turnedOff)/TotalNumOfWeights)
-                    #if regularization_type=='Blackout':
-                    #    fig = plt.figure()
-                    #    ax1 = fig.add_subplot(1, 2, 1)
-                    #   ax2 = fig.add_subplot(1, 2, 2)
-                    #    ax1.plot(PercentageOfConnOff)
-                    #    ax2.plot(LossFunctionCrossTrain,label='Cross-Entropy Train')
-                    #    ax2.plot(LossFunctionCrossValid,label='Cross-Entropy Validation')
-                    #    ax2.plot(LossFunctionRegu,label='Regularization')
-                    #    ax2.legend()
-                    #    fig.show()
-                    accuracyVal=sess.run(accuracy, feed_dict={x: valid_x, y_: valid_y})
-                    accuracyTest=sess.run(accuracy, feed_dict={x: test_x, y_: test_y})
-                    #tf.reset_default_graph()
-                    store_results(dataset,regularization_type, num_layers, num_nodes, num_steps,regularization_scale,percent_connections_kept,accuracyVal, accuracyTest, size)
-                    print('Accuracy Val: '+str(accuracyVal)+' , Accuracy Test: '+str(accuracyTest))
+                #if regularization_type=='Blackout':
+                #    fig = plt.figure()
+                #    ax1 = fig.add_subplot(1, 2, 1)
+                #   ax2 = fig.add_subplot(1, 2, 2)
+                #    ax1.plot(PercentageOfConnOff)
+                #    ax2.plot(LossFunctionCrossTrain,label='Cross-Entropy Train')
+                #    ax2.plot(LossFunctionCrossValid,label='Cross-Entropy Validation')
+                #    ax2.plot(LossFunctionRegu,label='Regularization')
+                #    ax2.legend()
+                #    fig.show()
+                accuracyVal=sess.run(accuracy, feed_dict={x: valid_x, y_: valid_y})
+                accuracyTest=sess.run(accuracy, feed_dict={x: test_x, y_: test_y})
+                tf.reset_default_graph()
+                store_results(dataset,regularization_type, num_layers, num_nodes, num_steps,regularization_scale,percent_connections_kept,accuracyVal, accuracyTest, size)
+                print('Accuracy Val: '+str(accuracyVal)+' , Accuracy Test: '+str(accuracyTest))
     
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
