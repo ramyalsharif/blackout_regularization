@@ -15,7 +15,7 @@ def get_batches(data_x, data_y, num_steps):
     return x_batches, y_batches
 
 def store_results(dataset,reguType, num_layers, num_nodes, num_steps,reguScale,percentOfConnectionsKept,accuracyValidation, accuracyTest,size):
-    with open('AccuracyResults'+dataset+reguType+'.txt', "a") as myfile:
+    with open('AccuracyResults'+dataset+str(size)+reguType+'.txt', "a") as myfile:
         myfile.write(str(size) + ','+reguType+','+str(num_layers)+','+str(num_nodes)+','+str(num_steps)+','+str(reguScale)+','+str(percentOfConnectionsKept)+','+str(accuracyValidation)+','+str(accuracyTest)+'\n')
 
 
