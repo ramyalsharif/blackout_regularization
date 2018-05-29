@@ -115,7 +115,7 @@ def main(_):
             accuracyVal=sess.run(accuracy, feed_dict={x: valid_x, y_: valid_y})
             accuracyTest=sess.run(accuracy, feed_dict={x: test_x, y_: test_y})
             tf.reset_default_graph()
-            store_results(dataset,regularization_type, num_layers, num_nodes, num_steps,regularization_scale,percent_connections_kept,accuracyVal, accuracyTest)
+            store_results(dataset,regularization_type, num_layers, num_nodes, num_steps,regularization_scale,percent_connections_kept,accuracyVal, accuracyTest, size)
             print('Accuracy Val: '+str(accuracyVal)+' , Accuracy Test: '+str(accuracyTest))
     
 if __name__ == '__main__':
