@@ -68,9 +68,11 @@ def main(_):
                 # Evaluate Model
                 correct_prediction = tf.equal(tf.argmax(y, 1), y_)
                 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-                
+                config = tf.ConfigProto()
+                config.gpu_options.allow_growth = True
+
                 # Initializing session
-                with tf.Session() as sess:
+                with tf.Session(config=config) as sess:
                     tf.global_variables_initializer().run()
             
             
