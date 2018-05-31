@@ -97,9 +97,9 @@ def get_regularization_penalty(weights, scale, percent_connections_kept, regular
                     blackout_weights=tf.reshape(w, [-1])
                 else:
                     blackout_weights=tf.concat([blackout_weights,tf.reshape(w, [-1])],axis=0)
-        targetNumberOfWeights=blackout_weights.shape[0].value*scale
+        targetNumberOfWeights=blackout_weights.shape[0].value*percent_connections_kept
         penaltyNumOfActive=getActivePenalty(blackout_weights,targetNumberOfWeights)
-        regularization_penalty=tf.cond(penaltyNumOfActive>0, lambda: penaltyNumOfActive*regularizationL1*100, lambda: tf.abs(penaltyNumOfActive)*targetNumberOfWeights*100)
+        regularization_penalty=tf.cond(penaltyNumOfActive>0, lambda: penaltyNumOfActive*regularizationL1*100, lambda: 0.0
     else:
         regularization_penalty=tf.constant(0.0)
     
