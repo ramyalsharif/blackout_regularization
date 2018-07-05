@@ -3,10 +3,6 @@ In this project, we propose "Blackout Regularization", a regularization techniqu
 
 The main purpose of such regularization is to reduce/prevent overfitting.
 
-## Getting Started
-
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. 
-
 ### Prerequisites
 
 What things you need to install the software and how to install them
@@ -20,23 +16,6 @@ Tensorflow
 
 For testing, we here use two datasets, namely MNIST and HIGGS dataset. MNIST is downloaded during runtime, HIGGS however, needs to be extracted from the atlas-higgs-challenge-2014-v2.csv.gz to the repository root.
 
-### Installing
-
-A step by step series of examples that tell you have to get a development env running
-
-Say what the step will be
-
-```
-Give the example
-```
-
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
 
 ## Authors
 
