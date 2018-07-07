@@ -1,5 +1,5 @@
 import tensorflow as tf
-from sigmoidBlackout import getActivePenalty
+from blackout import getActivePenalty
 
 def generate_weights(num_layers, num_inputs, num_hidden_nodes, num_classes):
     keys = []
