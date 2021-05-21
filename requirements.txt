@@ -34,7 +34,7 @@ SecretStorage==2.3.1
 six==1.11.0
 sklearn==0.0
 tensorboard==1.8.0
-tensorflow==1.8.0
+tensorflow==2.5.0
 termcolor==1.1.0
 unattended-upgrades==0.1
 urllib3==1.19.1
